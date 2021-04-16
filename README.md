@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 부동산 관리 사이트
 http://54.180.188.156:8080/ZipZom
 
@@ -6,3 +7,7 @@ http://54.180.188.156:8080/ZipZom
 사용 기술
 JSP, Java Spring Framework, jQeury, ajax, mariaDB, AWS EC2w, RDS
 
+=======
+# final_project
+2020/10/??, final_project
+>>>>>>> branch 'main' of https://github.com/PC-cell/final_project.git
