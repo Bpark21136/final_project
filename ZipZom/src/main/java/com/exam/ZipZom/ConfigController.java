@@ -257,184 +257,184 @@ public class ConfigController {
 	}
 	
 	// 이메일 중복검사 버튼 클릭한 경우
-		@RequestMapping(value = "/duEmail.action")
-		public ModelAndView duplicateEmailRequest(HttpServletRequest request) {
+	@RequestMapping(value = "/duEmail.action")
+	public ModelAndView duplicateEmailRequest(HttpServletRequest request) {
 
-			userTO to = new userTO();
-			int seqU = 0;
-			if(request.getParameter("seqU") != null) {
-				seqU = Integer.parseInt(request.getParameter("seqU"));	
-			}
-			String email = request.getParameter("email");
-			
-			to.setEmail(email);
-			to.setSeqU(seqU);
-
-			int flag = 0;
-			
-			if(sqlSession.selectOne("duEmailSelect", to) != null) {
-				flag = 1;	
-				if(sqlSession.selectOne("duOwnEmailSelect", to) != null && request.getParameter("seqU") != null) {
-					flag = 0;
-				}
-			}
-			
-			request.setAttribute("flag", flag);
-			
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("/data/flag_json");
-			modelAndView.addObject("list", request);
-			
-			return modelAndView;
+		userTO to = new userTO();
+		int seqU = 0;
+		if(request.getParameter("seqU") != null) {
+			seqU = Integer.parseInt(request.getParameter("seqU"));	
 		}
+		String email = request.getParameter("email");
+		
+		to.setEmail(email);
+		to.setSeqU(seqU);
+
+		int flag = 0;
+		
+		if(sqlSession.selectOne("duEmailSelect", to) != null) {
+			flag = 1;	
+			if(sqlSession.selectOne("duOwnEmailSelect", to) != null && request.getParameter("seqU") != null) {
+				flag = 0;
+			}
+		}
+		
+		request.setAttribute("flag", flag);
+		
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("/data/flag_json");
+		modelAndView.addObject("list", request);
+		
+		return modelAndView;
+	}
 	
 	// 아이디 찾기 버튼 클릭한 경우
 	@RequestMapping(value = "/findId.action")
 	public ModelAndView findIdRequest(HttpServletRequest request) {
 
-			userTO to = new userTO();
+		userTO to = new userTO();
 
-			String email = request.getParameter("email");
-			String name = request.getParameter("name");
-			to.setName(name);
-			to.setEmail(email);
+		String email = request.getParameter("email");
+		String name = request.getParameter("name");
+		to.setName(name);
+		to.setEmail(email);
 
-			int flag = 0;
-			String id = sqlSession.selectOne("findIdSelect", to);
-			if(id != null) {
-				flag = 1;
-			}
-
-			request.setAttribute("flag", flag);
-			request.setAttribute("id", id);
-
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("data/findid_json");
-			modelAndView.addObject("list", request);
-
-			return modelAndView;
+		int flag = 0;
+		String id = sqlSession.selectOne("findIdSelect", to);
+		if(id != null) {
+			flag = 1;
 		}
+
+		request.setAttribute("flag", flag);
+		request.setAttribute("id", id);
+
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("data/findid_json");
+		modelAndView.addObject("list", request);
+
+		return modelAndView;
+	}
 
 	// 인증번호 발송 버튼을 클릭한 경우
 	@RequestMapping(value = "/sendNumber.action")
 	public ModelAndView sendNumberRequest(HttpServletRequest request) {
 
-			userTO to = new userTO();
-			auth_passwordTO ato = new auth_passwordTO();
-			encryption enc = new encryption();
-			MailSender ms = new MailSender();
+		userTO to = new userTO();
+		auth_passwordTO ato = new auth_passwordTO();
+		encryption enc = new encryption();
+		MailSender ms = new MailSender();
 
-			String email = request.getParameter("email");
-			String id = request.getParameter("id");
-			to.setId(id);
-			to.setEmail(email);
-			ato.setEmail(email);
+		String email = request.getParameter("email");
+		String id = request.getParameter("id");
+		to.setId(id);
+		to.setEmail(email);
+		ato.setEmail(email);
 
-			int flag = 0;
-			String result = "";
-			String authNumber = "";
+		int flag = 0;
+		String result = "";
+		String authNumber = "";
 
-			// id와 email 일치 시 이메일 인증번호 생성
-			if(sqlSession.selectOne("sendNumberSelect", to) != null) {
-				flag = 1;
-				for( int i = 0; i < 6; i ++) {
-					result += String.valueOf((int)((Math.random()*10000)%10));
-				}
-				authNumber = enc.encryptionMain(result);			
-
-				ato.setAuthKey(authNumber);
-
-				// 이메일 인증 번호 테이블 중복 검사
-				int count = 0;
-				while(count == 0) {
-					if(sqlSession.selectOne("duplicateAuth_KeySelect", ato) == null) {
-						count = 1;
-					} else {
-						for( int i = 0; i < 6; i ++) {
-							result += String.valueOf((int)((Math.random()*10000)%10));
-						}
-						authNumber = enc.encryptionMain(result);
-
-						ato.setAuthKey(authNumber);
-					}
-				}
-				// 현재 시각 생성
-				Date date = new Date(System.currentTimeMillis());
-				ato.setGenerateDate(date);
-				// 중복된 이메일이 있는지 검사하고 인증번호 데이터 베이스 삽입
-				if(sqlSession.selectOne("duplicateEmailSelect", ato) != null) {
-					sqlSession.delete("duplicateEmailDelete", ato);
-					sqlSession.insert("auth_KeyInsert", ato);
-				} else {
-					sqlSession.insert("auth_KeyInsert", ato);				
-				}
-				// 1시간이 지난 인증번호 삭제
-				ms.sendMailMain(to.getEmail(), ato.getAuthKey());
+		// id와 email 일치 시 이메일 인증번호 생성
+		if(sqlSession.selectOne("sendNumberSelect", to) != null) {
+			flag = 1;
+			for( int i = 0; i < 6; i ++) {
+				result += String.valueOf((int)((Math.random()*10000)%10));
 			}
+			authNumber = enc.encryptionMain(result);			
 
-			request.setAttribute("flag", flag);
+			ato.setAuthKey(authNumber);
 
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("/data/flag_json");
-			modelAndView.addObject("list", request);
+			// 이메일 인증 번호 테이블 중복 검사
+			int count = 0;
+			while(count == 0) {
+				if(sqlSession.selectOne("duplicateAuth_KeySelect", ato) == null) {
+					count = 1;
+				} else {
+					for( int i = 0; i < 6; i ++) {
+						result += String.valueOf((int)((Math.random()*10000)%10));
+					}
+					authNumber = enc.encryptionMain(result);
 
-			return modelAndView;
+					ato.setAuthKey(authNumber);
+				}
+			}
+			// 현재 시각 생성
+			Date date = new Date(System.currentTimeMillis());
+			ato.setGenerateDate(date);
+			// 중복된 이메일이 있는지 검사하고 인증번호 데이터 베이스 삽입
+			if(sqlSession.selectOne("duplicateEmailSelect", ato) != null) {
+				sqlSession.delete("duplicateEmailDelete", ato);
+				sqlSession.insert("auth_KeyInsert", ato);
+			} else {
+				sqlSession.insert("auth_KeyInsert", ato);				
+			}
+			// 1시간이 지난 인증번호 삭제
+			ms.sendMailMain(to.getEmail(), ato.getAuthKey());
 		}
+
+		request.setAttribute("flag", flag);
+
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("/data/flag_json");
+		modelAndView.addObject("list", request);
+
+		return modelAndView;
+	}
 
 	// 인증번호 입력 확인 버튼을 누른 경우
 	@RequestMapping(value = "/checkAuthKey.action")
 	public ModelAndView checkAuthKeyRequest(HttpServletRequest request) {
-			// 1시간이 지난 인증번호 삭제
-			sqlSession.delete("auth_KeyDelete");
+		// 1시간이 지난 인증번호 삭제
+		sqlSession.delete("auth_KeyDelete");
 
-			auth_passwordTO ato = new auth_passwordTO();
+		auth_passwordTO ato = new auth_passwordTO();
 
-			ato.setAuthKey(request.getParameter("number"));
+		ato.setAuthKey(request.getParameter("number"));
 
-			int flag = 0;
-			String email = sqlSession.selectOne("authKeySelect", ato);
-			if(email != null) {
-				flag = 1;
-			}
-
-			request.setAttribute("flag", flag);
-			request.setAttribute("email", email);
-
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("/data/flag_json");
-			modelAndView.addObject("list", request);
-
-			return modelAndView;
+		int flag = 0;
+		String email = sqlSession.selectOne("authKeySelect", ato);
+		if(email != null) {
+			flag = 1;
 		}
+
+		request.setAttribute("flag", flag);
+		request.setAttribute("email", email);
+
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("/data/flag_json");
+		modelAndView.addObject("list", request);
+
+		return modelAndView;
+	}
 
 	// 비밀번호 변경 확인 버튼 클릭 시
 	@RequestMapping(value = "/changePassword.action")
 	public ModelAndView changePasswordRequest(HttpServletRequest request) {
 
-			userTO to = new userTO();
-			encryption enc = new encryption();
+		userTO to = new userTO();
+		encryption enc = new encryption();
 
-			String password = enc.encryptionMain(request.getParameter("password")); 
-			String email = request.getParameter("email");
-			
-			to.setEmail(email);
-			to.setPassword(password);
+		String password = enc.encryptionMain(request.getParameter("password")); 
+		String email = request.getParameter("email");
+		
+		to.setEmail(email);
+		to.setPassword(password);
 
-			int flag = 0;
-			int update = sqlSession.update("userPasswordUpdate", to);
-			if(update == 1) {
-				flag = update;
-				sqlSession.update("userPasswordUpdate", to);
-			}
-
-			request.setAttribute("flag", flag);
-
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("/data/flag_json");
-			modelAndView.addObject("list", request);
-
-			return modelAndView;
+		int flag = 0;
+		int update = sqlSession.update("userPasswordUpdate", to);
+		if(update == 1) {
+			flag = update;
+			sqlSession.update("userPasswordUpdate", to);
 		}
+
+		request.setAttribute("flag", flag);
+
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("/data/flag_json");
+		modelAndView.addObject("list", request);
+
+		return modelAndView;
+	}
 	
 	// 로그아웃 버튼을 누른 경우
 	@RequestMapping(value = "/logout.action")
@@ -515,61 +515,61 @@ public class ConfigController {
 	}
 	
 	// 회원정보 수정 페이지
-		@RequestMapping(value = "/userPropertyView.do")
-		public ModelAndView userPropertyViewRequest(HttpServletRequest request) {
+	@RequestMapping(value = "/userPropertyView.do")
+	public ModelAndView userPropertyViewRequest(HttpServletRequest request) {
+		
+		userTO to = new userTO();
+		
+		to.setSeqU(Integer.parseInt(request.getParameter("seqU")));
+		
+		List<userTO> listTO = sqlSession.selectList("userPropertyViewSelect", to);
+		
+		request.setAttribute("lists", listTO);
+		
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("data/user_json");
+		modelAndView.addObject("list", request);
+		
+		return modelAndView;
+	}
 			
-			userTO to = new userTO();
-			
-			to.setSeqU(Integer.parseInt(request.getParameter("seqU")));
-			
-			List<userTO> listTO = sqlSession.selectList("userPropertyViewSelect", to);
-			
-			request.setAttribute("lists", listTO);
-			
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("data/user_json");
-			modelAndView.addObject("list", request);
-			
-			return modelAndView;
+	// 회원정보 수정 확인
+	@RequestMapping(value = "/userPropertyUpdate.do")
+	public ModelAndView userPropertyUpdateRequest(HttpServletRequest request) {
+		
+		userTO to = new userTO();
+		encryption enc = new encryption();
+		
+		int seqU = Integer.parseInt(request.getParameter("seqU"));
+		
+		String passwordOri = enc.encryptionMain(request.getParameter("passwordOri")); 
+		String passwordNew = enc.encryptionMain(request.getParameter("password1")); 
+		String address = request.getParameter("roadAddrPart1");
+		String email = request.getParameter("email"); 
+		String phone = request.getParameter("phone");
+		String tel = request.getParameter("tel");
+		
+		int flag = 0;
+		
+		to.setSeqU(seqU);
+		to.setPassword(passwordOri);
+		if(sqlSession.selectOne("checkPasswordSelect", to) != null) {
+			to.setPassword(passwordNew);
+			to.setAddress(address);
+			to.setEmail(email);
+			to.setPhone(phone);
+			to.setTel(tel);
+			flag = sqlSession.update("userPropertyUpdate", to);
 		}
-			
-		// 회원정보 수정 확인
-		@RequestMapping(value = "/userPropertyUpdate.do")
-		public ModelAndView userPropertyUpdateRequest(HttpServletRequest request) {
-			
-			userTO to = new userTO();
-			encryption enc = new encryption();
-			
-			int seqU = Integer.parseInt(request.getParameter("seqU"));
-			
-			String passwordOri = enc.encryptionMain(request.getParameter("passwordOri")); 
-			String passwordNew = enc.encryptionMain(request.getParameter("password1")); 
-			String address = request.getParameter("roadAddrPart1");
-			String email = request.getParameter("email"); 
-			String phone = request.getParameter("phone");
-			String tel = request.getParameter("tel");
-			
-			int flag = 0;
-			
-			to.setSeqU(seqU);
-			to.setPassword(passwordOri);
-			if(sqlSession.selectOne("checkPasswordSelect", to) != null) {
-				to.setPassword(passwordNew);
-				to.setAddress(address);
-				to.setEmail(email);
-				to.setPhone(phone);
-				to.setTel(tel);
-				flag = sqlSession.update("userPropertyUpdate", to);
-			}
-			
-			request.setAttribute("flag", flag);
-			
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("register_update_ok");
-			modelAndView.addObject("flag",flag);
-			
-			return modelAndView;
-		}
+		
+		request.setAttribute("flag", flag);
+		
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("register_update_ok");
+		modelAndView.addObject("flag",flag);
+		
+		return modelAndView;
+	}
 	
 	// 일정관리 view 페이지
 	@RequestMapping(value = "/viewSchedule.do")
@@ -761,7 +761,7 @@ public class ConfigController {
 	@RequestMapping("/customer_manage.do")
 	public String customerManage(HttpServletRequest request, HttpServletResponse response,Model model) {
 		
-	return "customer_manage";
+		return "customer_manage";
 	}
 	
 	// 고객 등록
@@ -812,26 +812,26 @@ public class ConfigController {
 	// 고객 수정페이지
 	@RequestMapping("/customer_modify.json")
 	public String customermodify(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto,option_customerTO octo,customer_visit_dateTO cvdto,security_customerTO scto) {
-			int flag = 0;
-			//cto.setSeqC(Integer.parseInt(request.getParameter("seqC")));
-			if(request.getParameter("rooms") != null) {
-			cto.setRoom(Integer.parseInt(request.getParameter("rooms").substring(0,1)));
-			}
-			
-			flag = (int)testmapper.customerUpdate(cto);
-			if(flag == 1) {
-			octo.setPseqOc(cto.getSeqC());
-			testmapper.ocUpdate(octo);
-			cvdto.setPseqCvd(cto.getSeqC());
-			testmapper.cvdUpdate(cvdto);
-			scto.setPseqSc(cto.getSeqC());
-			testmapper.scUpdate(scto);
-			}
-			
-			
-			request.setAttribute("flag", flag);
-			return "data/flag_json";
+		int flag = 0;
+		//cto.setSeqC(Integer.parseInt(request.getParameter("seqC")));
+		if(request.getParameter("rooms") != null) {
+		cto.setRoom(Integer.parseInt(request.getParameter("rooms").substring(0,1)));
 		}
+		
+		flag = (int)testmapper.customerUpdate(cto);
+		if(flag == 1) {
+		octo.setPseqOc(cto.getSeqC());
+		testmapper.ocUpdate(octo);
+		cvdto.setPseqCvd(cto.getSeqC());
+		testmapper.cvdUpdate(cvdto);
+		scto.setPseqSc(cto.getSeqC());
+		testmapper.scUpdate(scto);
+		}
+		
+		
+		request.setAttribute("flag", flag);
+		return "data/flag_json";
+	}
 	
 	// 고객 삭제
 	@RequestMapping("/customer_delete.json")
@@ -872,16 +872,16 @@ public class ConfigController {
 	// 매물 관리 페이지
 	@RequestMapping("/pfs_manage.do")
 	public String pfsManage(HttpServletRequest request, HttpServletResponse response,Model model) {
-	return "pfs_manage";
+		return "pfs_manage";
 	}
 	
 	// 매물 리스트
 	@RequestMapping("/pfs_list.json")
 	public String pfsList(HttpServletRequest request, HttpServletResponse response,Model model,HttpSession session,pfsTO pto) {
-	pto.setPseqPfs((Integer)session.getAttribute("seqU"));
-	ArrayList<pfsTO> pfsList = (ArrayList<pfsTO>)testmapper.pfsList(pto);
-	request.setAttribute("pfsList", pfsList);
-	return "data/pfs_list";
+		pto.setPseqPfs((Integer)session.getAttribute("seqU"));
+		ArrayList<pfsTO> pfsList = (ArrayList<pfsTO>)testmapper.pfsList(pto);
+		request.setAttribute("pfsList", pfsList);
+		return "data/pfs_list";
 	}
 	
 	
@@ -914,8 +914,8 @@ public class ConfigController {
 			testmapper.pfsSecurity(spto);
 		}
 		request.setAttribute("flag",flag);
-	return "data/flag_json";
-}
+		return "data/flag_json";
+	}
 	@RequestMapping("/consulting_rtp.do")
 	public String rtpSearch(HttpServletRequest request, HttpServletResponse response,customerTO cto) {
 		return "consulting_rtp";
@@ -928,51 +928,51 @@ public class ConfigController {
 	}
 	
 	// 매물 위치 페이지 매물 정보 ajax 요청
-		@RequestMapping(value = "/pfsMapCompareView.json")
-		public ModelAndView pfsMapCompareViewRequest(HttpServletRequest request) {
-			
-			pfsTO pto = new pfsTO();
-			
-			int seqPfs1 = 0;
-			int seqPfs2 = 0;
-			int seqPfs3 = 0;
-			
-			if(request.getParameter("seqPfs1") != null && Integer.parseInt(request.getParameter("seqPfs1")) != 0) {
-				seqPfs1 = Integer.parseInt(request.getParameter("seqPfs1"));
-			}
-			if(request.getParameter("seqPfs2") != null && Integer.parseInt(request.getParameter("seqPfs2")) != 0) {
-				seqPfs2 = Integer.parseInt(request.getParameter("seqPfs2"));
-			}
-			if(request.getParameter("seqPfs3") != null && Integer.parseInt(request.getParameter("seqPfs3")) != 0) {
-				seqPfs3 = Integer.parseInt(request.getParameter("seqPfs3"));
-			}
-			
-			ArrayList<pfsTO> lists = new ArrayList<pfsTO>();
-			
-			if(seqPfs1 != 0) {
-				pto.setSeqPfs(seqPfs1);
-				pto = sqlSession.selectOne("pfsMapCompare", pto);
-				lists.add(pto);
-			}
-			if(seqPfs2 != 0) {
-				pto.setSeqPfs(seqPfs2);
-				pto = sqlSession.selectOne("pfsMapCompare", pto);
-				lists.add(pto);
-			}
-			if(seqPfs3 != 0) {
-				pto.setSeqPfs(seqPfs3);
-				pto = sqlSession.selectOne("pfsMapCompare", pto);
-				lists.add(pto);
-			}
-			
-			request.setAttribute("lists", lists);
-			
-			ModelAndView modelAndView = new ModelAndView();
-			modelAndView.setViewName("data/pfs_compare_map_json");
-			modelAndView.addObject("list", request);
-			
-			return modelAndView;
+	@RequestMapping(value = "/pfsMapCompareView.json")
+	public ModelAndView pfsMapCompareViewRequest(HttpServletRequest request) {
+		
+		pfsTO pto = new pfsTO();
+		
+		int seqPfs1 = 0;
+		int seqPfs2 = 0;
+		int seqPfs3 = 0;
+		
+		if(request.getParameter("seqPfs1") != null && Integer.parseInt(request.getParameter("seqPfs1")) != 0) {
+			seqPfs1 = Integer.parseInt(request.getParameter("seqPfs1"));
 		}
+		if(request.getParameter("seqPfs2") != null && Integer.parseInt(request.getParameter("seqPfs2")) != 0) {
+			seqPfs2 = Integer.parseInt(request.getParameter("seqPfs2"));
+		}
+		if(request.getParameter("seqPfs3") != null && Integer.parseInt(request.getParameter("seqPfs3")) != 0) {
+			seqPfs3 = Integer.parseInt(request.getParameter("seqPfs3"));
+		}
+		
+		ArrayList<pfsTO> lists = new ArrayList<pfsTO>();
+		
+		if(seqPfs1 != 0) {
+			pto.setSeqPfs(seqPfs1);
+			pto = sqlSession.selectOne("pfsMapCompare", pto);
+			lists.add(pto);
+		}
+		if(seqPfs2 != 0) {
+			pto.setSeqPfs(seqPfs2);
+			pto = sqlSession.selectOne("pfsMapCompare", pto);
+			lists.add(pto);
+		}
+		if(seqPfs3 != 0) {
+			pto.setSeqPfs(seqPfs3);
+			pto = sqlSession.selectOne("pfsMapCompare", pto);
+			lists.add(pto);
+		}
+		
+		request.setAttribute("lists", lists);
+		
+		ModelAndView modelAndView = new ModelAndView();
+		modelAndView.setViewName("data/pfs_compare_map_json");
+		modelAndView.addObject("list", request);
+		
+		return modelAndView;
+	}
 
 	// 매물 비교 페이지(자바로 하는)
 	@RequestMapping("/pfs_compare.do")
@@ -998,11 +998,11 @@ public class ConfigController {
 	// 매물 비교창 셀렉트박스 구성
 	@RequestMapping("/pfs_compareList.json")
 	public String pfsCompare2(HttpServletRequest request, HttpServletResponse response,Model model,HttpSession session) {
-			pfsTO pto = new pfsTO();
-			pto.setPseqPfs((Integer)session.getAttribute("seqU"));
-			
-			ArrayList<pfsTO> pfsList = (ArrayList<pfsTO>)testmapper.pfsList(pto);
-			request.setAttribute("pfsList", pfsList);
+		pfsTO pto = new pfsTO();
+		pto.setPseqPfs((Integer)session.getAttribute("seqU"));
+		
+		ArrayList<pfsTO> pfsList = (ArrayList<pfsTO>)testmapper.pfsList(pto);
+		request.setAttribute("pfsList", pfsList);
 		return "data/pfs_list";
 	}
 	
@@ -1088,14 +1088,14 @@ public class ConfigController {
 		return "data/flag_json";
 	}
 	
-		// 상담 보고서
-		@RequestMapping("/report.do")
-		public String finalReport(HttpServletRequest request, HttpServletResponse response,Model model) {
-			 ArrayList<pfsAllTO> paList = new ArrayList<pfsAllTO>();
-			 customerTO cto = new customerTO();
-			 if(request.getParameterValues("seqPfs") != null) {
-				 cto.setSeqC(Integer.parseInt(request.getParameter("seqC")));
-				 cto = testmapper.customerInfo(cto);
+	// 상담 보고서
+	@RequestMapping("/report.do")
+	public String finalReport(HttpServletRequest request, HttpServletResponse response,Model model) {
+		 ArrayList<pfsAllTO> paList = new ArrayList<pfsAllTO>();
+		 customerTO cto = new customerTO();
+		 if(request.getParameterValues("seqPfs") != null) {
+			 cto.setSeqC(Integer.parseInt(request.getParameter("seqC")));
+			 cto = testmapper.customerInfo(cto);
 			 String[] seqPfs = request.getParameterValues("seqPfs");
 			 int[] seq = new int[seqPfs.length];
 			 for(int i=0;i<seqPfs.length;i++) {
@@ -1103,70 +1103,70 @@ public class ConfigController {
 			 pfsAllTO pato = new pfsAllTO();
 			 pato = testmapper.pfsView(seq[i]);
 			 paList.add(pato);
-			 }
-			
-			 }
-			request.setAttribute("paList",paList);
-			request.setAttribute("cto", cto);	
-			return "final_report";
-		}
+		 }
 		
-		// 맞춤 매물
-		@RequestMapping("/consulting_match.do")
-		public String consultingMatch(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto) {
-				
-			return "consulting_match";
-		}
-		// 고객 이름 찾기
-		@RequestMapping("/customerFind.json")
-		public String find(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto) {
-			cto = (customerTO)testmapper.customerFind(cto);
+		 }
+		request.setAttribute("paList",paList);
+		request.setAttribute("cto", cto);	
+		return "final_report";
+	}
+	
+	// 맞춤 매물
+	@RequestMapping("/consulting_match.do")
+	public String consultingMatch(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto) {
 			
-			request.setAttribute("cto", cto);
-			return "data/customer_find";
-		}
+		return "consulting_match";
+	}
+	// 고객 이름 찾기
+	@RequestMapping("/customerFind.json")
+	public String find(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto) {
+		cto = (customerTO)testmapper.customerFind(cto);
 		
-		// 맞춤 매물 리스트
-		@RequestMapping("/pfs_find.json")
-		public String pfsfind(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto,HttpSession session) {
-			cto.setPseqC((int)session.getAttribute("seqU"));
-			System.out.println(2 + cto.getElevator());
-			if(cto.getElevator().equals("있음")) {
-				cto.setElevator("0");
-			} else {
-				cto.setElevator("1");
-			}
-			System.out.println(1 + cto.getElevator());
-			ArrayList<pfsTO> pfsList = (ArrayList<pfsTO>)testmapper.pfsFind(cto);
-			
-			request.setAttribute("pfsList", pfsList);
-			return "data/pfs_list";
+		request.setAttribute("cto", cto);
+		return "data/customer_find";
+	}
+	
+	// 맞춤 매물 리스트
+	@RequestMapping("/pfs_find.json")
+	public String pfsfind(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto,HttpSession session) {
+		cto.setPseqC((int)session.getAttribute("seqU"));
+		System.out.println(2 + cto.getElevator());
+		if(cto.getElevator().equals("있음")) {
+			cto.setElevator("0");
+		} else {
+			cto.setElevator("1");
 		}
+		System.out.println(1 + cto.getElevator());
+		ArrayList<pfsTO> pfsList = (ArrayList<pfsTO>)testmapper.pfsFind(cto);
 		
-		// 실거래가 매물 리스트
-		@RequestMapping("/rtp_find.json")
-		public String rtpfind(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto, rtpTO rto, HttpSession session) {
-			cto.setPseqC((int)session.getAttribute("seqU"));
+		request.setAttribute("pfsList", pfsList);
+		return "data/pfs_list";
+	}
+	
+	// 실거래가 매물 리스트
+	@RequestMapping("/rtp_find.json")
+	public String rtpfind(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto, rtpTO rto, HttpSession session) {
+		cto.setPseqC((int)session.getAttribute("seqU"));
 
-			ArrayList<rtpTO> rtpList = (ArrayList<rtpTO>)testmapper.rtpFind(cto);
+		ArrayList<rtpTO> rtpList = (ArrayList<rtpTO>)testmapper.rtpFind(cto);
+		
+		request.setAttribute("rtpList", rtpList);
+		return "data/rtp_list";
+	}
+	
+	// My Page
+	@RequestMapping("/mypage.do")
+	public String myPage(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto) {
 			
-			request.setAttribute("rtpList", rtpList);
-			return "data/rtp_list";
-		}
-		
-		// My Page
-		@RequestMapping("/mypage.do")
-		public String myPage(HttpServletRequest request, HttpServletResponse response,Model model,customerTO cto) {
-				
-			return "mypage";
-		}
-		
-		// 실거래가 리스트
-		@RequestMapping("/rtp_list.json")
-		public String rtpList(HttpServletRequest request, HttpServletResponse response,Model model,HttpSession session,rtpTO rto) {
+		return "mypage";
+	}
+	
+	// 실거래가 리스트
+	@RequestMapping("/rtp_list.json")
+	public String rtpList(HttpServletRequest request, HttpServletResponse response,Model model,HttpSession session,rtpTO rto) {
 		//rto.setPseqRtp((Integer)session.getAttribute("seqU"));
 		ArrayList<rtpTO> rtpList = (ArrayList<rtpTO>)testmapper.rtpList();
 		request.setAttribute("rtpList", rtpList);
 		return "data/rtp_list";
-		}
+	}
 }
